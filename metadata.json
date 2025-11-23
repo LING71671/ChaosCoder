@@ -1,0 +1,5 @@
+{
+  "name": "ChaosCoder - Code Obfuscator",
+  "description": "A developer tool designed to ruin clean code by making it verbose, redundant, and visually disgusting while keeping the logic intact. Powered by Gemini 2.5.",
+  "requestFramePermissions": []
+}
