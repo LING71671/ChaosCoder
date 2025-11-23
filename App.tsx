@@ -2,10 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import ControlPanel from './components/ControlPanel';
 import CodeEditor from './components/CodeEditor';
-import ApiKeyModal from './components/ApiKeyModal';
 import { SupportedLanguage, ChaosLevel } from './types';
 import { DEFAULT_CODE_SNIPPETS, CHAOS_FEATURES } from './constants';
-import { ruinCode } from './services/gemini';
+import { obfuscateCode } from './services/obfuscator';
 
 const App: React.FC = () => {
   const [language, setLanguage] = useState<SupportedLanguage>(SupportedLanguage.JAVA);
@@ -17,23 +16,13 @@ const App: React.FC = () => {
   const [inputCode, setInputCode] = useState<string>(DEFAULT_CODE_SNIPPETS[SupportedLanguage.JAVA]);
   const [outputCode, setOutputCode] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
-  const [apiKey, setApiKey] = useState<string>('');
-  const [showApiKeyModal, setShowApiKeyModal] = useState<boolean>(false);
-
-  useEffect(() => {
-    const savedKey = localStorage.getItem('chaoscoder_api_key');
-    if (savedKey) {
-      setApiKey(savedKey);
-    } else {
-      setShowApiKeyModal(true); // Show modal on first visit if no key is found
-    }
-  }, []);
 
   // Update default snippet when language changes
   useEffect(() => {
     const isDefaultInput = Object.values(DEFAULT_CODE_SNIPPETS).includes(inputCode);
     if (!inputCode || isDefaultInput) {
        setInputCode(DEFAULT_CODE_SNIPPETS[language]);
+       setOutputCode(''); // Clear output when language changes
     }
   }, [language, inputCode]);
 
@@ -45,51 +34,37 @@ const App: React.FC = () => {
     );
   };
 
-  const handleSaveApiKey = (key: string) => {
-    const trimmedKey = key.trim();
-    if(trimmedKey) {
-      setApiKey(trimmedKey);
-      localStorage.setItem('chaoscoder_api_key', trimmedKey);
-      setShowApiKeyModal(false);
-    }
-  };
-
-  const handleGenerate = useCallback(async () => {
+  const handleGenerate = useCallback(() => {
     if (!inputCode.trim()) return;
     
-    if (!apiKey) {
-      setShowApiKeyModal(true);
-      setOutputCode(`// Please set your API Key first by clicking the button in the top-right.`);
-      return;
-    }
-
     setIsGenerating(true);
     setOutputCode('');
 
-    try {
-      const result = await ruinCode(inputCode, apiKey, {
-        language,
-        level: chaosLevel,
-        features: selectedFeatures
-      });
-      setOutputCode(result);
-    } catch (error) {
-      setOutputCode(`// System Failure: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    } finally {
-      setIsGenerating(false);
-    }
-  }, [inputCode, apiKey, language, chaosLevel, selectedFeatures]);
+    // Simulate a brief processing time for better UX with the spinner
+    setTimeout(() => {
+      try {
+        const featuresToRun = CHAOS_FEATURES
+            .map(f => f.id)
+            .filter(id => selectedFeatures.includes(id));
+
+        const result = obfuscateCode(inputCode, {
+          language,
+          level: chaosLevel,
+          features: featuresToRun
+        });
+        setOutputCode(result);
+      } catch (error) {
+        setOutputCode(`// System Failure: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      } finally {
+        setIsGenerating(false);
+      }
+    }, 200); // 200ms delay
+
+  }, [inputCode, language, chaosLevel, selectedFeatures]);
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-chaos-500/30">
-      {showApiKeyModal && (
-        <ApiKeyModal 
-          initialKey={apiKey}
-          onSave={handleSaveApiKey} 
-          onClose={() => setShowApiKeyModal(false)} 
-        />
-      )}
-      <Header onApiKeyClick={() => setShowApiKeyModal(true)} />
+      <Header />
 
       <main className="max-w-[1600px] mx-auto p-4 md:p-6 lg:h-[calc(100vh-64px)]">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 h-full">

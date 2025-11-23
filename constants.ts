@@ -27,21 +27,25 @@ export const CHAOS_LEVELS = [
 ];
 
 export const CHAOS_FEATURES = [
-  { id: 'double_negation', label: 'Double Negation (!!flag)', default: true },
-  { id: 'verbose_naming', label: 'Verbose Variables (int valueOfInteger)', default: true },
-  { id: 'redundant_math', label: 'Redundant Math ((x * 1) + 0)', default: true },
-  { id: 'useless_comments', label: 'Passive Aggressive Comments', default: false },
-  { id: 'wrapper_hell', label: 'Wrapper Classes/Functions', default: false },
-  { id: 'spaghetti_logic', label: 'Spaghetti If/Else Logic', default: true },
-  { id: 'excessive_ternaries', label: 'Pointless Ternary Nesting', default: false },
-  { id: 'bitwise_madness', label: 'Bitwise Operator Abuse', default: false },
+  { id: 'mangled_naming', label: 'Mangled Naming (_O0_O_)', default: true },
+  { id: 'string_obfuscation', label: 'String Literal Obfuscation', default: true },
   { id: 'unicode_abuse', label: 'Misleading Unicode Variables', default: false },
-  { id: 'html_abuse', label: 'HTML-Specific Horrors', default: false },
+  { id: 'wrapper_hell', label: 'Wrapper Hell (pointless objects/arrays)', default: true },
+  { id: 'pointless_control_flow', label: 'Pointless Loops & Blocks', default: true },
+  { id: 'spaghetti_logic', label: 'Spaghetti If/Else Logic', default: true },
+  { id: 'excessive_ternaries', label: 'Unnecessary Ternary Expressions', default: true },
+  { id: 'double_negation', label: 'Double Negation (!!flag)', default: true },
+  { id: 'expression_obfuscation', label: 'Expression Obfuscation (Bitwise/Math)', default: true },
+  { id: 'dead_code_injection', label: 'Dead Code Injection', default: true },
+  { id: 'useless_comments', label: 'Passive Aggressive Comments', default: true },
+  { id: 'html_abuse', label: 'HTML-Specific Horrors', default: true },
 ];
 
 export const DEFAULT_CODE_SNIPPETS: Record<SupportedLanguage, string> = {
   [SupportedLanguage.JAVA]: `public class Calculator {
     public int add(int a, int b) {
+        String message = "Calculating...";
+        System.out.println(message);
         return a + b;
     }
 }`,
