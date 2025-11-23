@@ -1,5 +1,5 @@
-Gemini3 help me generate this app
-Website to try it now!!!
+Gemini3 help me generate this app.
+#Website to try it now!!!
 https://chaos-coder-xi.vercel.app/
 
 
