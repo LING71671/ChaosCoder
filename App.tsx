@@ -85,7 +85,7 @@ const App: React.FC = () => {
           <div className="lg:col-span-9 grid grid-cols-1 md:grid-cols-2 gap-6 h-[800px] lg:h-full">
             <div className="h-full">
               <CodeEditor 
-                label="Clean Input"
+                labelKey={"cleanInputLabel"}
                 value={inputCode}
                 onChange={setInputCode}
                 language={language}
@@ -93,7 +93,7 @@ const App: React.FC = () => {
             </div>
             <div className="h-full relative">
               <CodeEditor 
-                label="Chaotic Output"
+                labelKey={"chaoticOutputLabel"}
                 value={outputCode}
                 readOnly={true}
                 language={language}

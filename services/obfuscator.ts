@@ -61,7 +61,7 @@ const generateMangledName = () => {
 
 const applyMangledNaming = (code: string): string => {
     mangledCache.clear();
-    const commonVarsRegex = /\b(i|j|k|n|x|y|z|a|b|c|val|res|sum|tmp|flag|user|isAdmin|checkAuth|add|Calculator|is_even|n|message|main|isValid)\b/g;
+    const commonVarsRegex = /\b(i|j|k|n|x|y|z|a|b|c|val|res|sum|tmp|flag|user|isAdmin|checkAuth|add|Calculator|is_even|n|message|main|isValid|count_to_five|greeter|SayHello|name|check_user|username|greet|person|greeting|User|getUserName)\b/g;
     return code.replace(commonVarsRegex, (match) => {
         if (KEYWORDS.has(match)) return match;
         if (!mangledCache.has(match)) {
@@ -84,6 +84,44 @@ const applyUselessComments = (code: string): string => {
             lines.splice(randomIndex, 0, indent + comments[Math.floor(Math.random() * comments.length)]);
         }
     }
+    return lines.join('\n');
+};
+
+const applyGibberishComments = (code: string): string => {
+    const gibberish = [
+`/*
+ * Begin single-threaded quantum entanglement simulation.
+ * WARNING: Do not observe this block directly. May cause reality collapse.
+ * State vector projection is handled by the underlying framework.
+ * Estimated temporal displacement: 3.14 picoseconds.
+ */`,
+`/**
+ * This section decouples the synergistic orchestration of the data-flow paradigm.
+ * By leveraging a polymorphic middleware architecture, we can abstract
+ * the underlying implementation details, thus promoting a more scalable
+ * and maintainable codebase, at least in theory. In practice, it's just a loop.
+ */`,
+`// DEPRECATED: This function uses a legacy algorithm.
+// The new algorithm is identical but has a different name.
+// We keep this for backwards compatibility with a version that never existed.`,
+`/*
+  mov eax, 0xDEADBEEF  ; Load the cosmic constant
+  xor eax, eax        ; Nullify existence
+  jz  .reality_check  ; Check if we are still in the matrix
+.reality_check:
+  ; ... quantum leap ...
+*/`
+    ];
+    const lines = code.split('\n');
+    if (lines.length < 3) return code;
+    
+    const injectionIndex = Math.floor(Math.random() * (lines.length - 2)) + 1;
+    const indent = lines[injectionIndex].match(/^\s*/)?.[0] || '';
+    
+    const selectedGibberish = gibberish[Math.floor(Math.random() * gibberish.length)];
+    const indentedGibberish = selectedGibberish.split('\n').map(line => indent + line).join('\n');
+    
+    lines.splice(injectionIndex, 0, indentedGibberish);
     return lines.join('\n');
 };
 
@@ -188,7 +226,7 @@ const applyWrapperHell = (code: string, lang: SupportedLanguage): string => {
             return `auto tempWrapper = new std::vector<decltype(${returnValue})>({${returnValue}});\n auto val = (*tempWrapper)[0]; delete tempWrapper; return val;`;
         });
     }
-     if (lang === SupportedLanguage.JAVASCRIPT) {
+     if (lang === SupportedLanguage.JAVASCRIPT || lang === SupportedLanguage.TYPESCRIPT) {
         return code.replace(/return\s+(.*?);/g, 'return [($1)][0];');
     }
     return code;
@@ -211,9 +249,11 @@ const applyPointlessControlFlow = (code: string, lang: SupportedLanguage): strin
 
 const applyStringObfuscation = (code: string, lang: SupportedLanguage): string => {
     const replacer = (match: string, strContent: string): string => {
+        if (strContent.length === 0) return match;
         const charCodes = strContent.split('').map(c => c.charCodeAt(0)).join(', ');
         switch (lang) {
             case SupportedLanguage.JAVASCRIPT:
+            case SupportedLanguage.TYPESCRIPT:
                 return `String.fromCharCode(${charCodes})`;
             case SupportedLanguage.JAVA:
                  return `new String(new int[] {${charCodes}}, 0, ${strContent.length})`;
@@ -222,6 +262,12 @@ const applyStringObfuscation = (code: string, lang: SupportedLanguage): string =
             case SupportedLanguage.C:
             case SupportedLanguage.CPP:
                  return `(char[]){${charCodes}, 0}`; // Compound literal
+            case SupportedLanguage.CSHARP:
+                 return `new string(new char[] {${charCodes.replace(/(\d+)/g, '(char)$1')}})`;
+            case SupportedLanguage.SWIFT:
+                 return `String([${charCodes}].map { Character(UnicodeScalar($0)!) })`;
+            case SupportedLanguage.PHP:
+                return `implode(array_map('chr', [${charCodes}]))`;
             default:
                 return match;
         }
@@ -243,12 +289,14 @@ const applyDeadCodeInjection = (code: string, lang: SupportedLanguage): string =
         case SupportedLanguage.JAVA:
         case SupportedLanguage.C:
         case SupportedLanguage.CPP:
-             deadCode = `if((System.currentTimeMillis() * 0) != 0) { int x = 5; x++; }`;
+        case SupportedLanguage.CSHARP:
+             deadCode = `if((System.DateTime.Now.Ticks * 0) != 0) { int x = 5; x++; }`;
              if (lang === SupportedLanguage.C || lang === SupportedLanguage.CPP) {
                 deadCode = `if(0) { volatile int _dead = 1; }`;
              }
              break;
         case SupportedLanguage.JAVASCRIPT:
+        case SupportedLanguage.TYPESCRIPT:
             deadCode = `let _dead${Date.now()} = 0; if (!!_dead${Date.now()} && _dead${Date.now()} > 1) { console.log("unreachable"); }`
             break;
         case SupportedLanguage.PYTHON:
@@ -260,6 +308,60 @@ const applyDeadCodeInjection = (code: string, lang: SupportedLanguage): string =
     }
     return lines.join('\n');
 };
+
+const applyRecursiveInsanity = (code: string, lang: SupportedLanguage): string => {
+    // Target C-style for loops
+    if ([SupportedLanguage.JAVA, SupportedLanguage.JAVASCRIPT, SupportedLanguage.TYPESCRIPT, SupportedLanguage.C, SupportedLanguage.CPP, SupportedLanguage.CSHARP].includes(lang)) {
+        const forLoopRegex = /for\s*\((?:let|int|var)\s+(\w+)\s*=\s*(\d+);\s*\1\s*([<>])=?\s*(\w+|\d+);\s*\1\+\+\s*\)\s*\{([\s\S]*?)\}/g;
+        return code.replace(forLoopRegex, (match, iterator, start, op, end, body) => {
+            const funcName = generateMangledName();
+            const indentedBody = body.trim().split('\n').map(line => `    ${line}`).join('\n');
+            const type = (lang === SupportedLanguage.JAVA || lang === SupportedLanguage.C || lang === SupportedLanguage.CPP || lang === SupportedLanguage.CSHARP) ? 'void' : 'function';
+            const varType = (lang === SupportedLanguage.JAVA || lang === SupportedLanguage.C || lang === SupportedLanguage.CPP || lang === SupportedLanguage.CSHARP) ? 'int' : 'let';
+
+            // JS/TS can use an IIFE for cleaner injection
+            if (lang === SupportedLanguage.JAVASCRIPT || lang === SupportedLanguage.TYPESCRIPT) {
+                return `(function ${funcName}(${iterator}) {
+    if (${iterator} ${op} ${end}) {
+${indentedBody}
+        ${funcName}(${iterator} + 1);
+    }
+})(${start});`;
+            }
+
+            // Other C-style languages are trickier without a proper AST. This is a best-effort injection that assumes it's in a method scope.
+            // This is intentionally fragile and "bad", which fits the tool's theme.
+            return `
+{
+    class ${funcName}_class {
+        public static ${type} ${funcName}(${varType} ${iterator}) {
+            if (!(${iterator} ${op} ${end})) return;
+${indentedBody}
+            ${funcName}(${iterator} + 1);
+        }
+    }
+    ${funcName}_class.${funcName}(${start});
+}`;
+        });
+    }
+
+    // Target Python for...in range loops
+    if (lang === SupportedLanguage.PYTHON) {
+        const pyForLoopRegex = /for\s+(\w+)\s+in\s+range\((\d+)\):\n([\s\S]+?)(?=\n[^\s]|$)/g;
+        return code.replace(pyForLoopRegex, (match, iterator, end, body) => {
+            const funcName = generateMangledName();
+            const indentedBody = body.replace(/^(\s*)/gm, "$1    ");
+            return `def ${funcName}(${iterator}, end_val):
+    if ${iterator} < end_val:
+${indentedBody}
+        ${funcName}(${iterator} + 1, end_val)
+${funcName}(0, ${end})`;
+        });
+    }
+
+    return code;
+};
+
 
 export const obfuscateCode = (
   code: string,
@@ -276,6 +378,7 @@ export const obfuscateCode = (
   const pipeline: { id: string, func: (code: string, lang: SupportedLanguage) => string }[] = [
       { id: 'mangled_naming', func: applyMangledNaming },
       { id: 'string_obfuscation', func: applyStringObfuscation },
+      { id: 'recursive_insanity', func: applyRecursiveInsanity },
       { id: 'unicode_abuse', func: applyUnicodeAbuse },
       { id: 'wrapper_hell', func: applyWrapperHell },
       { id: 'pointless_control_flow', func: applyPointlessControlFlow },
@@ -285,6 +388,7 @@ export const obfuscateCode = (
       { id: 'expression_obfuscation', func: applyExpressionObfuscation },
       { id: 'dead_code_injection', func: applyDeadCodeInjection },
       { id: 'useless_comments', func: applyUselessComments },
+      { id: 'gibberish_comments', func: applyGibberishComments },
   ];
 
   for (const step of pipeline) {

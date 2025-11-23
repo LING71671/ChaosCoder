@@ -6,7 +6,11 @@ export enum SupportedLanguage {
   CPP = 'C++',
   GO = 'Go',
   RUST = 'Rust',
-  HTML = 'HTML'
+  HTML = 'HTML',
+  CSHARP = 'C#',
+  PHP = 'PHP',
+  SWIFT = 'Swift',
+  TYPESCRIPT = 'TypeScript',
 }
 
 export enum ChaosLevel {

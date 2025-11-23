@@ -1,15 +1,17 @@
 import React from 'react';
 import { Copy, Check } from 'lucide-react';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface CodeEditorProps {
   value: string;
   onChange?: (value: string) => void;
-  label: string;
+  labelKey: 'cleanInputLabel' | 'chaoticOutputLabel';
   readOnly?: boolean;
   language: string;
 }
 
-const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, label, readOnly = false, language }) => {
+const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, labelKey, readOnly = false, language }) => {
+  const { t } = useTranslation();
   const [copied, setCopied] = React.useState(false);
 
   const handleCopy = async () => {
@@ -18,12 +20,14 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, label, readOnl
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const placeholderText = readOnly ? t('editor.outputPlaceholder') : t('editor.inputPlaceholder');
+
   return (
     <div className="flex flex-col h-full bg-dark-800 border border-white/10 rounded-xl overflow-hidden shadow-xl">
       <div className="bg-dark-900/50 border-b border-white/5 px-4 py-3 flex items-center justify-between">
         <span className="text-xs font-mono text-neutral-400 uppercase tracking-widest flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${readOnly ? 'bg-chaos-500' : 'bg-blue-500'}`}></span>
-          {label}
+          {t(`editor.${labelKey}`)}
         </span>
         <div className="flex items-center gap-3">
           <span className="text-[10px] text-neutral-600 font-mono px-2 py-1 rounded bg-white/5 border border-white/5">
@@ -51,7 +55,7 @@ const CodeEditor: React.FC<CodeEditorProps> = ({ value, onChange, label, readOnl
               ? 'text-chaos-100 selection:bg-chaos-500/30 cursor-text' 
               : 'text-neutral-300 selection:bg-blue-500/30'
           }`}
-          placeholder={readOnly ? "Waiting for chaos..." : "Paste your clean code here..."}
+          placeholder={placeholderText}
         />
         {!readOnly && value.length === 0 && (
           <div className="absolute inset-0 pointer-events-none flex items-center justify-center text-neutral-700 font-mono text-sm">

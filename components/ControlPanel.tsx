@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings2, Flame, Skull } from 'lucide-react';
 import { LANGUAGE_OPTIONS, CHAOS_LEVELS, CHAOS_FEATURES } from '../constants';
 import { SupportedLanguage, ChaosLevel } from '../types';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface ControlPanelProps {
   language: SupportedLanguage;
@@ -24,13 +25,15 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
   isGenerating,
   onGenerate
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className="bg-dark-800 border border-white/10 rounded-xl p-5 flex flex-col gap-6 h-full overflow-y-auto">
       
       {/* Language Selector */}
       <div className="space-y-2">
         <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
-          <Settings2 className="w-3 h-3" /> Target Language
+          <Settings2 className="w-3 h-3" /> {t('controls.languageLabel')}
         </label>
         <div className="relative">
           <select 
@@ -51,7 +54,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* Chaos Level */}
       <div className="space-y-3">
         <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider flex items-center gap-2">
-          <Flame className="w-3 h-3" /> Toxicity Level
+          <Flame className="w-3 h-3" /> {t('controls.chaosLevelLabel')}
         </label>
         <div className="grid gap-2">
           {CHAOS_LEVELS.map((level) => (
@@ -64,8 +67,8 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                   : 'bg-dark-900 border-transparent hover:border-white/10 text-neutral-400'
               }`}
             >
-              <div className="font-medium text-sm mb-0.5">{level.value}</div>
-              <div className="text-[10px] opacity-70 leading-tight">{level.description}</div>
+              <div className="font-medium text-sm mb-0.5">{t(`levels.${level.value}.title`)}</div>
+              <div className="text-[10px] opacity-70 leading-tight">{t(`levels.${level.value}.description`)}</div>
             </button>
           ))}
         </div>
@@ -74,7 +77,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
       {/* Features Toggles */}
       <div className="space-y-3 flex-grow">
         <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-          Applied Annoyances
+          {t('controls.featuresLabel')}
         </label>
         <div className="space-y-1">
           {CHAOS_FEATURES.map((feature) => (
@@ -100,7 +103,7 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
                 onChange={() => toggleFeature(feature.id)}
               />
               <span className={`text-sm ${selectedFeatures.includes(feature.id) ? 'text-neutral-200' : 'text-neutral-500'}`}>
-                {feature.label}
+                {t(`features.${feature.id}`)}
               </span>
             </label>
           ))}
@@ -119,12 +122,12 @@ const ControlPanel: React.FC<ControlPanelProps> = ({
         {isGenerating ? (
           <>
             <div className="w-5 h-5 border-2 border-neutral-500 border-t-transparent rounded-full animate-spin"></div>
-            Ruining...
+            {t('controls.buttonGenerating')}
           </>
         ) : (
           <>
             <Skull className="w-5 h-5" />
-            Ruinate Code
+            {t('controls.buttonIdle')}
           </>
         )}
       </button>
