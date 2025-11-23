@@ -1,4 +1,7 @@
 Gemini3 help me generate this app
+Website to try it now!!!
+https://chaos-coder-xi.vercel.app/
+
 
 # Run and deploy your AI Studio app
 
@@ -17,4 +20,3 @@ View your app in AI Studio: https://ai.studio/apps/drive/1_CE3dBYtVAQmEcDcqT6XlI
 3. Run the app:
    `npm run dev`
 
-Website:https://chaos-coder-xi.vercel.app/
