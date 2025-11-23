@@ -21,13 +21,14 @@ OUTPUT FORMAT: Return ONLY the code block. Do not wrap it in markdown backticks.
 
 export const ruinCode = async (
   code: string,
+  apiKey: string,
   config: TransformationConfig
 ): Promise<string> => {
-  if (!process.env.API_KEY) {
-    throw new Error("API Key is missing");
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please provide one in the settings.");
   }
 
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: apiKey });
 
   const prompt = `
     Input Language: ${config.language}
@@ -55,7 +56,6 @@ export const ruinCode = async (
       config: {
         systemInstruction: getSystemInstruction(),
         temperature: 0.9, // High creativity for chaos
-        // FIX: `safetySettings` must be inside the `config` object.
         safetySettings: [
           {
             category: HarmCategory.HARM_CATEGORY_HARASSMENT,

@@ -1,7 +1,11 @@
 import React from 'react';
-import { Skull, Zap } from 'lucide-react';
+import { Skull, KeyRound } from 'lucide-react';
 
-const Header: React.FC = () => {
+interface HeaderProps {
+  onApiKeyClick: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onApiKeyClick }) => {
   return (
     <header className="border-b border-white/10 bg-dark-900/50 backdrop-blur-md sticky top-0 z-10">
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
@@ -17,10 +21,14 @@ const Header: React.FC = () => {
           </div>
         </div>
         
-        <div className="hidden md:flex items-center gap-2 text-sm text-neutral-400">
-          <Zap className="w-4 h-4 text-yellow-400" />
-          <span>Powered by Gemini 2.5 Flash</span>
-        </div>
+        <button 
+          onClick={onApiKeyClick}
+          className="flex items-center gap-2 text-sm text-neutral-400 hover:text-chaos-400 transition-colors p-2 rounded-lg hover:bg-white/5"
+          title="Set API Key"
+        >
+          <KeyRound className="w-4 h-4" />
+          <span>API Key</span>
+        </button>
       </div>
     </header>
   );
