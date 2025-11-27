@@ -36,6 +36,10 @@ export const CHAOS_FEATURES = [
   { id: 'useless_comments', default: true },
   { id: 'gibberish_comments', default: false },
   { id: 'html_abuse', default: true },
+  // Aggressive JS/TS features
+  { id: 'property_obfuscation', default: false },
+  { id: 'prototype_mangling', default: false },
+  { id: 'control_flow_flattening', default: false },
 ];
 
 export const DEFAULT_CODE_SNIPPETS: Record<SupportedLanguage, string> = {
@@ -62,15 +66,19 @@ int main() {
         print(i)
 
 count_to_five()`,
-  [SupportedLanguage.JAVASCRIPT]: `const checkAuth = (user) => {
-  if (user.isAdmin) {
-    for (let i = 0; i < 3; i++) {
-        console.log("Admin check passed");
-    }
-    return true;
+  [SupportedLanguage.JAVASCRIPT]: `class UserAuth {
+  constructor(user) {
+    this.user = user;
   }
-  return false;
-};`,
+
+  checkAuth() {
+    if (this.user.isAdmin) {
+      console.log("Admin check passed");
+      return true;
+    }
+    return false;
+  }
+}`,
   [SupportedLanguage.CPP]: `bool isValid(int n) {
     return n > 0 && n < 100;
 }`,
@@ -113,10 +121,22 @@ function check_user($username) {
 }`,
  [SupportedLanguage.TYPESCRIPT]: `interface User {
   name: string;
-  id: number;
+  isAdmin: boolean;
 }
 
-function getUserName(user: User): string {
-  return user.name;
+class UserAuth {
+  private user: User;
+
+  constructor(user: User) {
+    this.user = user;
+  }
+
+  checkAuth(): boolean {
+    if (this.user.isAdmin) {
+      console.log("Admin check passed");
+      return true;
+    }
+    return false;
+  }
 }`
 };

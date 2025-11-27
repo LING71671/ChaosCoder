@@ -1,7 +1,7 @@
 export const translations = {
   en: {
     header: {
-      subtitle: 'v2.2.0 // Recursively worse',
+      subtitle: 'v2.3.0 // Structural Chaos',
     },
     controls: {
       languageLabel: 'Target Language',
@@ -39,6 +39,9 @@ export const translations = {
       useless_comments: 'Passive Aggressive Comments',
       gibberish_comments: 'Gibberish Comments (Adds Noise)',
       html_abuse: 'HTML-Specific Horrors',
+      property_obfuscation: 'Property Obfuscation (obj["prop"])',
+      prototype_mangling: 'Prototype Mangling (anti-class)',
+      control_flow_flattening: 'Control Flow Flattening (while/switch)',
     },
     editor: {
       cleanInputLabel: 'Clean Input',
@@ -49,7 +52,7 @@ export const translations = {
   },
   zh: {
     header: {
-      subtitle: 'v2.2.0 // 递归地变得更糟',
+      subtitle: 'v2.3.0 // 结构性混乱',
     },
     controls: {
       languageLabel: '目标语言',
@@ -87,6 +90,9 @@ export const translations = {
       useless_comments: '阴阳怪气的注释',
       gibberish_comments: '废话注释 (增加噪音)',
       html_abuse: 'HTML 特有的恐怖操作',
+      property_obfuscation: '属性混淆 (obj["prop"])',
+      prototype_mangling: '原型混淆 (反-class)',
+      control_flow_flattening: '控制流扁平化 (while/switch)',
     },
     editor: {
       cleanInputLabel: '清晰输入',

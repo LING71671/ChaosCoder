@@ -6,7 +6,7 @@ const homoglyphs: { [key: string]: string } = {
   'i': 'і', 'j': 'ј',
   'A': 'А', 'B': 'В', 'E': 'Е', 'H': 'Н', 'K': 'К', 'M': 'М', 'O': 'О', 'P': 'Р', 'C': 'С', 'T': 'Т', 'X': 'Х'
 };
-const KEYWORDS = new Set(['if', 'else', 'while', 'for', 'return', 'int', 'bool', 'const', 'let', 'var', 'def', 'class', 'public', 'private', 'static', 'void', 'function', 'import', 'from', 'include', 'main', 'true', 'false', 'null', 'new', 'System', 'out', 'println', 'String', 'Object']);
+const KEYWORDS = new Set(['if', 'else', 'while', 'for', 'return', 'int', 'bool', 'const', 'let', 'var', 'def', 'class', 'public', 'private', 'static', 'void', 'function', 'import', 'from', 'include', 'main', 'true', 'false', 'null', 'new', 'System', 'out', 'println', 'String', 'Object', 'this', 'super', 'case', 'switch', 'default', 'break', 'continue']);
 
 const applyUnicodeAbuse = (code: string): string => {
     return code.replace(/\b([a-zA-Z_][a-zA-Z0-9_]*)\b/g, (match) => {
@@ -61,7 +61,7 @@ const generateMangledName = () => {
 
 const applyMangledNaming = (code: string): string => {
     mangledCache.clear();
-    const commonVarsRegex = /\b(i|j|k|n|x|y|z|a|b|c|val|res|sum|tmp|flag|user|isAdmin|checkAuth|add|Calculator|is_even|n|message|main|isValid|count_to_five|greeter|SayHello|name|check_user|username|greet|person|greeting|User|getUserName)\b/g;
+    const commonVarsRegex = /\b(i|j|k|n|x|y|z|a|b|c|val|res|sum|tmp|flag|user|isAdmin|checkAuth|add|Calculator|is_even|n|message|main|isValid|count_to_five|greeter|SayHello|name|check_user|username|greet|person|greeting|User|getUserName|UserAuth)\b/g;
     return code.replace(commonVarsRegex, (match) => {
         if (KEYWORDS.has(match)) return match;
         if (!mangledCache.has(match)) {
@@ -249,7 +249,7 @@ const applyPointlessControlFlow = (code: string, lang: SupportedLanguage): strin
 
 const applyStringObfuscation = (code: string, lang: SupportedLanguage): string => {
     const replacer = (match: string, strContent: string): string => {
-        if (strContent.length === 0) return match;
+        if (strContent.length === 0 || strContent.length > 100) return match;
         const charCodes = strContent.split('').map(c => c.charCodeAt(0)).join(', ');
         switch (lang) {
             case SupportedLanguage.JAVASCRIPT:
@@ -272,7 +272,7 @@ const applyStringObfuscation = (code: string, lang: SupportedLanguage): string =
                 return match;
         }
     };
-    return code.replace(/"((?:\\.|[^"\\])*?)"/g, replacer);
+    return code.replace(/"((?:\\.|[^"\\])*?)"/g, replacer).replace(/'((?:\\.|[^'\\])*?)'/g, replacer);
 };
 
 const applyDeadCodeInjection = (code: string, lang: SupportedLanguage): string => {
@@ -362,6 +362,93 @@ ${funcName}(0, ${end})`;
     return code;
 };
 
+// JS/TS specific structural transformations
+const applyPropertyAccessObfuscation = (code: string, lang: SupportedLanguage): string => {
+    if (lang !== SupportedLanguage.JAVASCRIPT && lang !== SupportedLanguage.TYPESCRIPT) return code;
+    // Matches obj.prop, but not obj.prop(...) or things like 1.2
+    return code.replace(/\b([a-zA-Z_$][\w$]*)\.([a-zA-Z_$][\w$]*)\b(?!\s*\()/g, '$1["$2"]');
+};
+
+const applyPrototypeMangling = (code: string, lang: SupportedLanguage): string => {
+    if (lang !== SupportedLanguage.JAVASCRIPT && lang !== SupportedLanguage.TYPESCRIPT) return code;
+    
+    const classRegex = /class\s+([a-zA-Z0-9_]+)\s*(?:extends\s+([a-zA-Z0-9_]+))?\s*\{([\s\S]*?)\}/g;
+    return code.replace(classRegex, (match, className, superClassName, classBody) => {
+        let constructorFunc = `function ${className}() {}`;
+        let prototypeAssignments = '';
+
+        const constructorRegex = /constructor\s*\((.*?)\)\s*\{([\s\S]*?)\}/;
+        const constructorMatch = classBody.match(constructorRegex);
+        if (constructorMatch) {
+            const params = constructorMatch[1];
+            const body = constructorMatch[2];
+            constructorFunc = `function ${className}(${params}) {${body}}`;
+        }
+        
+        if (superClassName) {
+            prototypeAssignments += `${className}.prototype = Object.create(${superClassName}.prototype);\n`;
+            prototypeAssignments += `${className}.prototype.constructor = ${className};\n`;
+        }
+
+        const methodRegex = /(?<!static\s+|constructor\s*)\b([a-zA-Z0-9_]+)\s*\((.*?)\)\s*\{([\s\S]*?)\}/g;
+        let remainingBody = classBody.replace(constructorRegex, '');
+        let methodMatch;
+        while ((methodMatch = methodRegex.exec(remainingBody)) !== null) {
+            const methodName = methodMatch[1];
+            const params = methodMatch[2];
+            const body = methodMatch[3];
+            prototypeAssignments += `${className}.prototype.${methodName} = function(${params}) {${body}};\n`;
+        }
+
+        return `${constructorFunc}\n${prototypeAssignments}`;
+    });
+};
+
+const applyControlFlowFlattening = (code: string, lang: SupportedLanguage): string => {
+    if (lang !== SupportedLanguage.JAVASCRIPT && lang !== SupportedLanguage.TYPESCRIPT) return code;
+    
+    const functionRegex = /(function\s*[a-zA-Z0-9_]*\s*\([^)]*\)\s*\{)([\s\S]*?)(\})|(\([^)]*\)\s*=>\s*\{)([\s\S]*?)(\})/g;
+
+    return code.replace(functionRegex, (match, start1, body1, end1, start2, body2, end2) => {
+        const start = start1 || start2;
+        const body = body1 || body2;
+        const end = end1 || end2;
+
+        if (body.trim().length < 20 || body.length > 3000) return match;
+
+        // Fragile statement splitting
+        const statements = body.trim().split(/(?<=[;}]|return)\s*/).filter(s => s.trim() !== '');
+        if (statements.length < 2) return match;
+
+        const stateVar = `_state_${Math.random().toString(36).substring(2, 7)}`;
+        const orderVar = `_order_${Math.random().toString(36).substring(2, 7)}`;
+        
+        const order = Array.from({ length: statements.length }, (_, i) => i);
+        const shuffledOrder = [...order].sort(() => Math.random() - 0.5);
+        const executionOrder = order.map(i => shuffledOrder.indexOf(i));
+        
+        let switchCases = '';
+        shuffledOrder.forEach((originalIndex, caseIndex) => {
+            switchCases += `
+            case '${caseIndex}':
+                ${statements[originalIndex].trim()}
+                continue;`;
+        });
+
+        const flattenedBody = `
+    let ${orderVar} = [${executionOrder.map(v => `'${v}'`).join(', ')}];
+    let ${stateVar} = 0;
+    while (true) {
+        switch (${orderVar}[${stateVar}++]) {
+            ${switchCases}
+        }
+        break;
+    }
+`;
+        return `${start}${flattenedBody}${end}`;
+    });
+};
+
 
 export const obfuscateCode = (
   code: string,
@@ -376,9 +463,17 @@ export const obfuscateCode = (
   }
 
   const pipeline: { id: string, func: (code: string, lang: SupportedLanguage) => string }[] = [
+      // Naming and major structural changes first
       { id: 'mangled_naming', func: applyMangledNaming },
-      { id: 'string_obfuscation', func: applyStringObfuscation },
+      { id: 'prototype_mangling', func: applyPrototypeMangling },
+      { id: 'control_flow_flattening', func: applyControlFlowFlattening },
       { id: 'recursive_insanity', func: applyRecursiveInsanity },
+
+      // Property access must be changed before strings are obfuscated
+      { id: 'property_obfuscation', func: applyPropertyAccessObfuscation },
+      { id: 'string_obfuscation', func: applyStringObfuscation },
+      
+      // Logic and expression manipulation
       { id: 'unicode_abuse', func: applyUnicodeAbuse },
       { id: 'wrapper_hell', func: applyWrapperHell },
       { id: 'pointless_control_flow', func: applyPointlessControlFlow },
@@ -387,6 +482,8 @@ export const obfuscateCode = (
       { id: 'double_negation', func: applyDoubleNegation },
       { id: 'expression_obfuscation', func: applyExpressionObfuscation },
       { id: 'dead_code_injection', func: applyDeadCodeInjection },
+      
+      // Cosmetic
       { id: 'useless_comments', func: applyUselessComments },
       { id: 'gibberish_comments', func: applyGibberishComments },
   ];
